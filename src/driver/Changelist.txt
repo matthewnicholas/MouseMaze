@@ -1,0 +1,12 @@
+feb 3rd 17
+@author Emily_Tewey:
+	+Package                                            
+		is now "driver" since that is where main is
+	+Mouse                                              
+		-condensed spacing for
+		 one-line getters/setters 
+		-shadowed X and Y in Mouse(int, int)
+	+Project
+		-split classes into their own files so they
+		 are easier for two people to edit.
+---------------------------------------------------------------
