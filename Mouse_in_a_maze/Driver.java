@@ -14,7 +14,7 @@ public class Driver
 {
 	public static void main(String[] args) 
 	{
-		final int numberOfMice = 2;
+		final int numberOfMice = 4;
 		Mouse mice[] = new Mouse[numberOfMice];
 		
 		Maze maze = new Maze("Maze.txt");
@@ -33,7 +33,7 @@ public class Driver
 				maze.drawMaze(mice);
 				//Move the mouse
 				micky.move(micky.senseDirection(maze, mice));
-				Thread.sleep(500);
+				Thread.sleep(1);
 				}catch(Exception e) {}
 			}
 			//if (the mouse is at the exit)
@@ -45,7 +45,7 @@ public class Driver
 		
 		//System.out.println("Micky found the cheese");
 		for (int i = 0; i < mice.length; i++) {
-			System.out.println("Mouse " + i + "(" + mice[i].sym + " int:" + mice[i].getInt() + ") escaped in " + mice[i] + " moves");
+			System.out.println("Mouse " + i+1 + "(" + mice[i].sym + " int:" + mice[i].getInt() + ") escaped in " + mice[i] + " moves");
 		}
 
 	}
@@ -93,7 +93,7 @@ class Maze
 			if (maze.charAt(i) == symbol) //this is where the mouse is
 			{
 				maze = maze.substring(0, i) + ' ' + maze.substring(i+1);
-				float intelligence = (float)Math.random()*.5f + .2f;
+				float intelligence = (float)(Math.random()*80)/100 + .2f;
 				return new Mouse(i/size,i%size, symbol, intelligence);
 			}
 		}
@@ -108,7 +108,7 @@ class Maze
 	}
 	/**
 	 * Drawn at each step of the mouse's movement
-	 * @param m
+	 * @param m - list of mice in the maze
 	 */
 	public void drawMaze(Mouse mice[])
 	{
@@ -141,14 +141,16 @@ class Mouse
 	private point brain[] = new point[100];
 	//metrix
 	private int moves = 0;
+	private int memIndex = 0;
 	public char sym = 'M';
 	
 
-	public Mouse(int x, int y, char sym, float intelligance)
+	public Mouse(int x, int y, char sym, float intelligence)
 	{
 		X=x;
 		Y=y;
 		this.sym = sym;
+		this.intelligence = intelligence;
 	}	
 	public int getX() 
 	{
@@ -200,6 +202,7 @@ class Mouse
 				look = Y-1 > -1 ? m.getCharAtPosition(Y-1, X) : 'X';
 				if(look != 'X') {
 					escape(look=='E'?false:true);
+					//check if there is another mouse
 					for(Mouse rival : mice)
 						if(rival.getX() == X && rival.getY() == Y)
 							break;
@@ -251,7 +254,8 @@ class Mouse
 			}
 			//smell another mouse and if i do i should go that way else just randomly pick a direction
 			int didSmell = 0;//smelledAnother(mice); (mystery bug)
-			preferedDirection = didSmell != 0 ? didSmell : (int)(Math.random()*4+1);
+			int newDirection = getBiasedDirection(preferedDirection);
+			preferedDirection = didSmell != 0 ? didSmell : newDirection;
 			if(frustrationGauge > 4) {
 				ignoreMemory = true;
 			}
@@ -285,17 +289,35 @@ class Mouse
 		return 0;
 	}
 	
+	//turning left and right is more likely they all the way around
+	public int getBiasedDirection(int dir) {
+		double rando = Math.random();
+		//turn left
+		if (rando > .6) {
+			return (dir-1 > 0 ? dir-1:4);
+		}
+		//turn right
+		else if (rando > .2) {
+			return (dir+1 < 4? dir+1:4);
+		}
+		//uturn
+		else{
+			return (dir-2 > 0 ? dir-2 : (dir-2 > -1 ? 4 : 3));
+		}
+		
+	}
+	
 	public void move(int direction) {
 		if(direction == 0) return;
 		//should we create a memory of this location
 		float memory = (float)Math.random();
 		if (memory <= intelligence) {
 			//add location memory
-			for (int i = 0; i<brain.length;i++) {
-				if (brain[i] == null) {
-					brain[i] = new point(X, Y);
-					break;
-				}
+			brain[memIndex] = new point(X, Y);
+			memIndex++;
+			//mice can only remember so much
+			if (memIndex > 99){
+				memIndex = 0;
 			}
 		}
 		
